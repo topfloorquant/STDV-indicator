@@ -1,0 +1,70 @@
+//@version=6
+indicator("Sigma Distribution Bands", overlay = true, max_labels_count = 20)
+
+// Inputs
+length     = input.int(100, "Lookback Length", minval = 1)
+src        = input.source(close, "Source")
+showLabels = input.bool(true, "Show Probability Labels")
+
+// Mean & Standard Deviation
+mu  = ta.sma(src, length)
+sig = ta.stdev(src, length)
+
+// Sigma Levels
+p3 = mu + 3.0 * sig
+p2 = mu + 2.0 * sig
+p1 = mu + 1.0 * sig
+m0 = mu
+n1 = mu - 1.0 * sig
+n2 = mu - 2.0 * sig
+n3 = mu - 3.0 * sig
+
+// Plots
+plot(p3, title="+3σ", color=color.red,  linewidth=1)
+plot(p2, title="+2σ", color=color.red,  linewidth=1)
+plot(p1, title="+1σ", color=color.red,  linewidth=2)
+
+plot(m0, title="0σ",  color=color.blue, linewidth=2)
+
+plot(n1, title="-1σ", color=color.teal, linewidth=2)
+plot(n2, title="-2σ", color=color.teal, linewidth=1)
+plot(n3, title="-3σ", color=color.teal, linewidth=1)
+
+// Persistent labels
+var label lblP3 = na
+var label lblP2 = na
+var label lblP1 = na
+var label lblM0 = na
+var label lblN1 = na
+var label lblN2 = na
+var label lblN3 = na
+
+f_updateLabel(label lbl, int x, float y, string txt) =>
+    if na(lbl)
+        label.new(x, y, txt, style=label.style_none, textcolor=color.white)
+    else
+        label.set_xy(lbl, x, y)
+        label.set_text(lbl, txt)
+        lbl
+
+// Labels, updated instead of duplicated
+if barstate.islast
+    if showLabels
+        x = bar_index + 2
+
+        lblP3 := f_updateLabel(lblP3, x, p3, "0.14% (+3σ)")
+        lblP2 := f_updateLabel(lblP2, x, p2, "2.27% (+2σ)")
+        lblP1 := f_updateLabel(lblP1, x, p1, "15.87% (+1σ)")
+        lblM0 := f_updateLabel(lblM0, x, m0, "50% (0σ)")
+        lblN1 := f_updateLabel(lblN1, x, n1, "15.87% (-1σ)")
+        lblN2 := f_updateLabel(lblN2, x, n2, "2.27% (-2σ)")
+        lblN3 := f_updateLabel(lblN3, x, n3, "0.14% (-3σ)")
+    else
+        label.delete(lblP3), lblP3 := na
+        label.delete(lblP2), lblP2 := na
+        label.delete(lblP1), lblP1 := na
+        label.delete(lblM0), lblM0 := na
+        label.delete(lblN1), lblN1 := na
+        label.delete(lblN2), lblN2 := na
+        label.delete(lblN3), lblN3 := na
+
